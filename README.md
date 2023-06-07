@@ -287,13 +287,30 @@ Challenge: The `lastCompletedDate` could also be set. Add this to the alternate 
 
 Then Make the button display "Completed For Today" if completed `completedToday` is true. 
 
-<!-- ## Add Habit
+To test the button is displaying the correct label you'll need to create a Habit with a date other than today. To do this you'll need to add alternative initializer to the Date Extension. 
+
+Add the following to `DateExtension.swift`:
+
+```Swift
+init(dateString:String) {
+    let dateStringFormatter = DateFormatter()
+    dateStringFormatter.dateFormat = "yyyy-MM-dd"
+    dateStringFormatter.locale = NSLocale(localeIdentifier: "en_US_POSIX") as Locale
+    let d = dateStringFormatter.date(from: dateString)!
+    self.init(timeInterval:0, since:d)
+}
+```
+
+This will allow you to initialize a date instance with a string in the form: "yyyy-mm-dd" for example: "2023-06-03" would initialize a date as June 5, 2023. 
+
+
+## Add Habit
 
 Create the add habit view. This view displays a grid of icons, we choose an icon and tap the button to move on to the confirm habit view. 
 
 Create a new SiwftUI View: File > New. Choose SwiftUI View. 
 
-Name this file `AddHabit` -->
+Name this file `AddHabit`
 
 
 
