@@ -632,6 +632,29 @@ Notice that `NavigationLink` takes two parameters: `destination` which the view 
 
 Since the destination view requires a habit we provide the habit from the list iteration. 
 
+## Navigation Grid
+
+The Add Habit view navigates to the Confirm habit view. The images in the grid need to be `NavigationLink` items. Since the parent view will have the `NavigationView` you won't have to include it here. 
+
+Here is what you currently have: 
+
+```Swift
+ForEach(Habit.Images.allCases, id: \.rawValue) { item in
+    Image(uiImage: item.image)
+}
+```
+
+We want to navigate to the `ConfirmHabit` view when you tap the Image. 
+
+```Swift
+ForEach(Habit.Images.allCases, id: \.rawValue) { item in
+    NavigationLink(destination: ConfirmHabit()) {
+        Image(uiImage: item.image)
+    }
+}
+```
+
+With this in place you should be able to navigate to `ConfirmHabit`. Keep in mind that this will only work when starting from `HabitList` since that view creates the `NavigationView`!
 
 
 
