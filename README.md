@@ -634,36 +634,303 @@ Since the destination view requires a habit we provide the habit from the list i
 
 ## Navigation Grid
 
-The Add Habit view navigates to the Confirm habit view. The images in the grid need to be `NavigationLink` items. Since the parent view will have the `NavigationView` you won't have to include it here. 
+Add Habit is where we choose an image to represent the habit we are about to create. We need to be able to select an image from the grid before advancing to the next view by tapping the button at the bottom. 
+
+To select an image you'll need to use `@State`. This state variable will hold the selected image. 
+
+That brings up the question: what is the selected image? Specifically I mean what type. The images are defined in the enum `Habit.Images`. This is just the enum, each case returns a `UIImage`. 
 
 Here is what you currently have: 
 
 ```Swift
-ForEach(Habit.Images.allCases, id: \.rawValue) { item in
-    Image(uiImage: item.image)
+import SwiftUI
+
+struct AddHabit: View {
+  let gridConfig = [
+    GridItem(.adaptive(minimum: 80)),
+    GridItem(.adaptive(minimum: 80)),
+    GridItem(.adaptive(minimum: 80))
+  ]
+  
+  var body: some View {
+    VStack {
+      LazyVGrid(columns: gridConfig) {
+        ForEach(Habit.Images.allCases, id: \.rawValue) { item in
+          Image(uiImage: item.image)
+        }
+      }
+      Spacer()
+      Button("Select Image") {
+        // 
+      }
+    }.padding(30)
+  }
 }
-```
 
-We want to navigate to the `ConfirmHabit` view when you tap the Image. 
-
-```Swift
-ForEach(Habit.Images.allCases, id: \.rawValue) { item in
-    NavigationLink(destination: ConfirmHabit()) {
-        Image(uiImage: item.image)
+struct AddHabit_Previews: PreviewProvider {
+    static var previews: some View {
+        AddHabit()
     }
 }
 ```
 
-With this in place you should be able to navigate to `ConfirmHabit`. Keep in mind that this will only work when starting from `HabitList` since that view creates the `NavigationView`!
+Add a `@State` variable to the top:
 
+```Swift
+struct AddHabit: View {
+  @State private var selectedImage: Habit.Images?
+  ...
+}
+```
 
+This is variable `selectedImage` is type optional Habit.Images. It's optional so the value can be nil, or the value can be one of the `Habit.Images` cases. 
 
+It's marked `@State` so if this variable is updated the View will update its display. 
 
+Next find where the images are displayed. This happens in the `ForEach`. It should look something like: 
 
+```Swift
+ForEach(Habit.Images.allCases, id: \.rawValue) { item in
+  Image(uiImage: item.image)
+}
+```
 
+This displays one image for each case in `Habit.Images`. 
 
+You want the selected image display differently from the others. The selected image is stored in `selectedImage`. That means if `item` is equal to `selectedImage` then it is the selected one. 
 
+To differentiate the display you'll use `.colorMultiply`. This takes a color as an argument and will make the colors darker depending on the color. 
 
+```Swift
+Image(uiImage: item.image)
+  .colorMultiply(item == selectedImage ? .white : .gray)
+```
 
+Here `.colorMultiply` uses `.white` when the selected image matches the item and `.gray` when they do not match. White will make no change, but gray will make the colors of the image darker. 
+
+Select an image by adding an `.onTapGesture`. 
+
+```Swift
+Image(uiImage: item.image)
+  .colorMultiply(item == selectedImage ? .white : .gray)
+  .onTapGesture {
+    selectedImage = item
+  }
+```
+
+At this stage sll of the imsges should initially appear "gray". When image is tapped it should show in full color.
+
+Last, this view needs to navigate to the `ConfirmHabit` view. Replace the button at the bottom with a `NavigationLink`.
+
+```Swift
+NavigationLink(destination: ConfirmHabit()) {
+  Text("Select Image")
+}
+```
+
+## Passing the Habit Image to ConfirmHabit
+
+The next trick will be to pass the selected habit image to the `ConfirmHabit` view. 
+
+To do this start in the `ConfirmHabit` view and add a variable to hold the image. 
+
+```Swift
+struct ConfirmHabit: View {
+  var image: Habit.Images? // <-- Add this
+  ...
+}
+```
+
+Here you added the `image` var. This is type optional `Habit.Images`
+
+Next, find the `Image()` view where the image is displayed. Change it to look like this: 
+
+```Swift
+...
+Image(uiImage: image?.image ?? Habit.Images.bulb.image)
+...
+```
+
+Here `Image` displays the image or the Bulb image if `image` is nil. 
+
+By adding the `image` var you are now required to pass this to the view. 
+
+Go to the bottom and edit the preview. Define a variable for testing: 
+
+```Swift
+var confirmHabitImage: Habit.Images? = Habit.Images.grow
+```
+
+Next pass that vairble to the `ConfirHabit` view like this: 
+
+```Swift
+ConfirmHabit(image: confirmHabitImage)
+```
+
+When you test this view you should see the `grow` image. When the view is displayed another way you'll see the image that is passed to this view. Lets handle that. 
+
+Open the `AddHabit` view. Find the `NavigationLink` and updated it to look like: 
+
+```Swift
+NavigationLink(destination: ConfirmHabit(image: selectedImage)) {
+  Text("Select Image")
+}
+```
+
+Noitice you are passing the selected image as the argument to image. 
+
+## Connect to the PsersitenceLayer
+
+To connect PersistenceLayer to our SwiftUI app will require a few chnages. Let's make it a Singleton. A singleton is a class configured so only one instance is ever created. 
+
+Singleton is a programming pattern. In some cases you will only want to create a single instance of a class. In this app the PersistanceLayer is an example of this. We only ever want one instance of PersistenceLayer since persistence layer has the array of habist that is cshared across all views. 
+
+Open PersistenceLayer and make a couple changes. 
+
+Change PersistenceLayer from a struct to a class. This is needed since Structs are immutable. 
+
+```Swift
+class PersistenceLayer {
+  ...
+}
+```
+
+Next make PersistenceLayer an ObservableObject. This will allow our SwiftUI views to update when "Published" of this object change. 
+
+```Swift
+class PersistenceLayer: ObservableObject {
+  ...
+}
+```
+
+Add a new static property sharedInstance. This property is static, meaning it is accessed from the class not from an instance of the class! Assign this property an instance of the class. 
+
+```Swift
+class PersistenceLayer: ObservableObject {
+  static let sharedInstance = PersistenceLayer()
+  ...
+```
+
+From here on you will always PersistenceLayer like this: 
+
+```Swift
+PersistenceLayer.sharedIntance
+```
+In this way any time the sharedInstance is accessed it will always be the single instance of this class that is stored on the static property. 
+
+Change the definition the habits property to: 
+
+```Swift
+@Published var habits: [Habit] = []
+```
+
+A published var is a variable that lets other objects know when it's updated. In this way when a new item is added to the list our views can update. 
+
+Remove a few things. Find `loadHabits` and remove "private mutating"
+
+```Swift
+func loadHabits() {
+  ...
+}
+```
+
+Find `createNewHabit` and remove `@discardableResult mutating`
+
+```Swift
+func createNewHabit(name: String, image: Habit.Images) -> Habit {
+  ...
+}
+```
+
+Also remove the return type and the return value. We aren't using these. 
+
+```Swift 
+func createNewHabit(...) {
+  ...
+  // return newHabit <- Remove this
+}
+```
+
+Find `delete` and remove `mutating`
+
+```Swift
+func delete(_ habitIndex: Int) {
+  ...
+}
+```
+
+Find `markHabitAsCompleted` and remove `mutating`
+
+```Swift
+func markHabitAsCompleted(_ habitIndex: Int) -> Habit {
+  ...
+}
+```
+
+Find `swapHabits` and remove `mutating`
+
+```Swift
+func swapHabits(habitIndex: Int, destinationIndex: Int) {
+  ...
+}
+```
+
+Find `setNeedsToReloadHabits` and remove `mutating`. 
+
+```Swift
+func setNeedsToReloadHabits() {
+  ...
+}
+```
+
+The original PersistenceLayer was created as a struct. Structs are immutable. So mutating was used to allow some of the properties to be mutated. By changing PersistenceLayer to a class it's properties can be mutated so the mutating keyword is not needed. 
+
+### Updating the HabitList
+
+Open HabitList make a couple changes. These changes will use the single instance of PersistanceLayer and mark that as an Observable Object. This will allow this view to update when the Observable object updated. 
+
+Find: 
+
+```Swift
+@State var habits: [Habit] = PersistenceLayer.sharedInstance.habits
+```
+
+Change this to: 
+
+```Swift
+@ObservedObject var pl = PersistenceLayer.sharedInstance
+```
+
+I removed the `habits: [Habit]` array. You'll now get the habits array from PersistenceLayer like this: `pl.habist`. 
+
+Find: 
+
+```Swift
+List(habits) {
+  ...
+}
+```
+
+Change this to: 
+
+```Swift
+List(pl.habits) {
+  ...
+}
+```
+
+### Update ConfirmHabit
+
+Confirm Habit creates a new habit when the butto n is tapped. You'll create the new habit by calling: `PersistenceLayer.createHabit()`. 
+
+In ConfirmHabit find the button.  
+
+```Swift
+PersistenceLayer
+  .sharedInstance
+  .createNewHabit(name: title, image: image ?? Habit.Images.bulb)
+```
+
+Here you call `createHabit` on the single instance of `PersistanceLayer` and set the title and image. Since image is optional we check with the nil coalesing operator and use the bulb if we find nil. 
 
 
