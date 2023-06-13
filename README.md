@@ -926,11 +926,19 @@ Confirm Habit creates a new habit when the butto n is tapped. You'll create the 
 In ConfirmHabit find the button.  
 
 ```Swift
-PersistenceLayer
-  .sharedInstance
-  .createNewHabit(name: title, image: image ?? Habit.Images.bulb)
+Button("Create Habit") {
+  PersistenceLayer
+    .sharedInstance
+    .createNewHabit(name: title, image: image ?? Habit.Images.bulb)
+}
 ```
 
 Here you call `createHabit` on the single instance of `PersistanceLayer` and set the title and image. Since image is optional we check with the nil coalesing operator and use the bulb if we find nil. 
+
+### HabitDetails and complting a habit
+
+The last stage is to allow marking a habit complete in the detials View.
+
+
 
 
