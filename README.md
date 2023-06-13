@@ -935,10 +935,81 @@ Button("Create Habit") {
 
 Here you call `createHabit` on the single instance of `PersistanceLayer` and set the title and image. Since image is optional we check with the nil coalesing operator and use the bulb if we find nil. 
 
-### HabitDetails and complting a habit
+Take a look at PersistenceLayer and find the `markHabitAsCompleted` function. This function takes the index of a habit and returns a habit. 
 
-The last stage is to allow marking a habit complete in the detials View.
+Since what we have here doesn't supply the index this will have to change. Rewrite this function so that it takes a `Habit` as a parameter. 
 
+It will use the id of the habit to located the correct habit. 
 
+```Swift
+func markHabitAsCompleted(_ updateHabit: Habit) -> Habit? {
+  for i in habits.indices {
+    if habits[i].id == updateHabit.id {
+      habits[i].numberOfCompletions += 1
+      if let lastCompletionDate = habits[i].lastCompletionDate, lastCompletionDate.isYesterday {
+        habits[i].currentStreak += 1
+      } else {
+        habits[i].currentStreak = 1
+      }
+      if habits[i].currentStreak > habits[i].bestStreak {
+        habits[i].bestStreak = habits[i].currentStreak
+      }
+      let now = Date()
+      habits[i].lastCompletionDate = now
+      self.saveHabits()
+      return habits[i]
+    }
+  }
+  return nil
+}
+```
 
+This function now loops over all of the habits. Matches the supplied habit to a habit in the list, then updates that habit and returns it. 
 
+If the habit is not found it returns nil. For this reason the return type has been changed to `Habit?` (Optional Habit.)
+
+### HabitDetails and completing a habit
+
+The last stage is to allow marking a habit complete in the details View. The origial tutorial uses the index of a habit to mark it as complete. 
+
+Open HabitDetail.swift. This view is passed a Habit object and it displays that. If you complete a habit we will update the habit and we want the view to update also. For this reason mark `habit` as `@State`. 
+
+```Swift
+struct HabitDetails: View {
+  @State var habit: Habit 
+  ...
+```
+
+As a State variable changing habit will cause this view to update. 
+
+Next find the button. Make these changes: 
+
+```Swift
+Button(habit.completedToday ? "Completed for Today!" : "Mark as Completed") {
+  habit = PersistenceLayer.sharedInstance.markHabitAsCompleted(habit)!
+}
+```
+
+Here if `habit.completedToday` is true the button displays "Completed for Today!" othewrwise: "Mark as Completed". 
+
+In the code block for the button, you call the persistence layers `markHabitAsCompleted` method and pass the habit. 
+
+This method returns a habit so you assign that to the @State var `habit`. Assigning a new value causes the view to updated. 
+
+Last disable the button when the habit is marked completed. 
+
+```Swift
+Button(habit.completedToday ? "Completed for Today!" : "Mark as Completed") {
+  habit = PersistenceLayer.sharedInstance.markHabitAsCompleted(habit)!
+}.disabled(habit.completedToday)
+```
+
+Add `.disabled()` after the button. Notice that disabled takes a bool you supply `habit.isCompletedToday` which is true if the habit was completed today! 
+
+## Conclusion
+
+This tutorial is complete! You covered: 
+
+- SwiftUI including many of the major view elements. 
+- @State which updates a view when a variable changes
+- @Observable which allows your views to observe properties of an object
