@@ -3,10 +3,10 @@
 
 The next steps are to get the navigation working. In this app list items in the `HabitList` view take us to the `HabitDetails` view. Tapping the + in the upper right (we need to add this) takes us to the `AddHabit` view, there tapping the button at the bottom takes us to the `ConfirmHabit` view, here we create a new habit and return to the habit list. 
 
-Start in `HabitList`, wrap the `List` in a `NavigationView`. 
+Start in `HabitList`, wrap the `List` in a `NavigationStack`. 
 
 ```Swift
-NavigationView {
+NavigationStack {
   List(habits) { habit in
     HabitListCell(habit: habit)
   }
@@ -17,10 +17,10 @@ The effect of this should be invisible. You've wrapped the current view in a nav
 
 Navigation controllers have a navigation bar at the top. This is where the title of the view and possibly buttons can be displayed. 
 
-To add the title add a new `Text` element inside the `NavigationView` and declare it as the `navigationTitle` like this: 
+To add the title add a new `Text` element inside the `NavigationStack` and declare it as the `navigationTitle` like this: 
 
 ```Swift
-NavigationView {
+NavigationStack {
   Text("") // Navigation title Text
     .navigationTitle("Habits") // navigation title
   List(habits) { habit in
@@ -34,7 +34,7 @@ This should show the label "Habits" at the top in the "navbar". You can style th
 I'm not sure why a string in `Text` shows up as sort of a subheading. Try this: 
 
 ```Swift
-NavigationView {
+NavigationStack {
   Text("Developing Good Habits!") // Navigation title Text
     .navigationTitle("Habits") // navigation title
   List(habits) { habit in
@@ -45,10 +45,10 @@ NavigationView {
 
 You should see the text: "Developing Good Habits!" below the title. There is probably a reason. I'm not sure why as I write this. 
 
-Next, add a button at the top. Do this by adding a "toolbar" to the `VStack`. It feels like you should be added to the `NavigationView` but realize the `NavigationView` is outside of the current view. Think of the `NavigationView` as a container. When you navigate to another view you may not want a toolbar. So the toolbar goes inside the `NavigationView` so it is part of the current view. 
+Next, add a button at the top. Do this by adding a "toolbar" to the `VStack`. It feels like you should be added to the `NavigationStack` but realize the `NavigationStack` is outside of the current view. Think of the `NavigationStack` as a container. When you navigate to another view you may not want a toolbar. So the toolbar goes inside the `NavigationStack` so it is part of the current view. 
 
 ```Swift
-NavigationView {
+NavigationStack {
   VStack {
     Text("Developing Good Habits!") // Navigation title Text
       .navigationTitle("Habits") // navigation title
@@ -71,7 +71,7 @@ Now add some navigation. To add navigation swap the Button for a `NavigationLink
 Try this: 
 
 ```Swift
-NavigationView {
+NavigationStack {
   VStack {
     Text("Developing Good Habits!") // Navigation title Text
       .navigationTitle("Habits") // navigation title
