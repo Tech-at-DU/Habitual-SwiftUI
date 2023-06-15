@@ -10,6 +10,7 @@ Button("Create Habit") {
   PersistenceLayer
     .sharedInstance
     .createNewHabit(name: title, image: image ?? Habit.Images.bulb)
+	NavigationUtil.popToRootView()
 }
 ```
 

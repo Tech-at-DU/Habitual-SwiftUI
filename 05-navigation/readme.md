@@ -152,3 +152,4 @@ List(habits) { habit in
 Notice that `NavigationLink` takes two parameters: `destination` which is the view to navigate to, and the second parameter is the view to display that will be the link, this is the habit list cell.
 
 Since the destination view requires a habit we provide the habit from the list iteration. 
+
