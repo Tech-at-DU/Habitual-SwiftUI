@@ -50,3 +50,52 @@ NavigationLink(destination: ConfirmHabit(image: selectedImage)) {
 ```
 
 Notice you are passing the selected image as the argument to the image. 
+
+## Getting back to the list 
+
+To get back to the root view, the HabitList, should be easy but it turns out SwiftUI doesn't provide an easy way to do this. 
+
+I found this extension on Stack Overflow to help us out. 
+
+Create a new file `NavigationUtil.swft`. Add the following. 
+
+```Swift
+import Foundation
+import UIKit
+
+struct NavigationUtil {
+    static func popToRootView() {
+        DispatchQueue.main.asyncAfter(deadline: .now()) {
+            findNavigationController(viewController:
+UIApplication.shared.windows.filter { $0.isKeyWindow
+}.first?.rootViewController)?
+                .popToRootViewController(animated: true)
+        }
+    }
+static func findNavigationController(viewController: UIViewController?)
+-> UINavigationController? {
+        guard let viewController = viewController else {
+            return nil
+        }
+if let navigationController = viewController as? UINavigationController
+{
+        return navigationController
+    }
+for childViewController in viewController.children {
+        return findNavigationController(viewController:
+childViewController)
+    }
+return nil
+    }
+}
+```
+
+From here you can use: `NavigationUtil.popToRootView()` to return to the first View in the stack. 
+
+Add this to the button: 
+
+```Swift
+Button("Create Habit") {
+	NavigationUtil.popToRootView()
+}
+```
